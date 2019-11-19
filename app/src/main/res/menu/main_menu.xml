@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="none"
+        android:id="@+id/manna">
+        <item
+            android:id="@+id/user_manager"
+            android:icon="@drawable/user_icon"
+            android:title="用户管理"/>
+        <item
+            android:id="@+id/map_download"
+            android:icon="@drawable/download"
+            android:title="地图下载"/>
+        <item
+            android:id="@+id/alarm"
+            android:title="报警信息"
+            android:icon="@drawable/alarm_icon"
+            />
+        <item
+            android:id="@+id/map_utils"
+            android:title="地图工具"
+            android:icon="@drawable/map_util_icon"
+            />
+        <item
+            android:id="@+id/log_item"
+            android:title="日志"
+            android:icon="@drawable/log_icon"
+            />
+
+    </group>
+</menu>

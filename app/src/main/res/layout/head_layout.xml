@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_bg"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/dp_50"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <com.example.uav_client.View.SearchView
+        android:id="@+id/tv_head_view"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_50"/>
+
+</LinearLayout>
