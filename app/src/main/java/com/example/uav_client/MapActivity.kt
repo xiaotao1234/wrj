@@ -1,5 +1,6 @@
 package com.example.uav_client
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -14,9 +15,17 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amap.api.maps.*
 import com.amap.api.maps.model.*
+import com.example.uav_client.Adapter.MapListAdapter
+import com.example.uav_client.Application.SysApplication
+import com.example.uav_client.Data.Common.NobodyAirplaneData
+import com.example.uav_client.Data.Common.ReceiveBody
+import com.example.uav_client.Data.Common.RequestBuildUtil
+import com.example.uav_client.Data.Main.DataListSource
+import com.example.uav_client.Network.Consumer
 import com.example.uav_client.R
 import java.io.File
 import java.io.FileNotFoundException
@@ -24,6 +33,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
@@ -41,8 +51,11 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
     lateinit var buffer: StringBuffer
     lateinit var screenShoot: TextView
     lateinit var mUiSettings: UiSettings
-    lateinit var polygon:Polygon
+    lateinit var mapListAdapter: MapListAdapter
+    var polygon: Polygon? = null
+    var list = ArrayList<String>()
     lateinit var bg: View
+    var latLngsAlarm: ArrayList<LatLng> = ArrayList()
     private val latLngsuser: MutableList<LatLng> = ArrayList()
     private val latLngs: ArrayList<LatLng>
         get() {
@@ -53,18 +66,18 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
 
     private var downOrUp: Boolean = false
     override fun onMapClick(p0: LatLng?) {
-        if(downOrUp==true){
+        if (downOrUp) {
             click()
-        }else{
+        } else {
             latLngClick = p0!!
             addMarkersToMapUser(latLngClick)
         }
     }
 
     override fun onBackPressed() {
-        if (downOrUp==true){
+        if (downOrUp) {
             click()
-        }else{
+        } else {
             super.onBackPressed()
         }
     }
@@ -78,9 +91,14 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
         }
     }
 
+    var position = -1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
+        val  intent = getIntent()
+        if(intent!=null){
+            position = intent.getIntExtra("id",0)
+        }
         hideHeader()
         mapView = findViewById(R.id.map)
         bg = findViewById(R.id.bg)
@@ -93,8 +111,11 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
         pushIma = findViewById(R.id.map_data_up_down)
         recyclerView = findViewById(R.id.map_data_list)
         mapView.systemUiVisibility = View.INVISIBLE
+        mapListAdapter = MapListAdapter(list)
+        recyclerView.adapter = mapListAdapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
         measureLength.setOnClickListener {
-//            Toast.makeText(this, "请在地图上选定测距点", Toast.LENGTH_SHORT).show()
+            //            Toast.makeText(this, "请在地图上选定测距点", Toast.LENGTH_SHORT).show()
             click()
         }
         clearPoint.setOnClickListener {
@@ -122,33 +143,100 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
                 biglayout.viewTreeObserver.removeOnGlobalLayoutListener(this)
             }
         })
-        changeCamera(this!!.aMap!!, LatLng(30.632194819840947, 103.97716823318481))
-        addMarkersToMap(LatLng(30.632194819840947, 103.97716823318481))
-        val thread = object : Thread() {
-            override fun run() {
-                var d = 30.63101315632748
-                super.run()
-                while (true) {
-                    sleep(4000)
-                    latLngs.add(LatLng(30.63301643674847, 103.97646549442291))
-                    mapView.post {
-                        addMarkersToMap(LatLng(30.63301643674847, 103.97646549442291))
-                    }
-                    d -= 0.001
-                }
-            }
-        }
-        thread.start()
+        changeCamera(LatLng(30.632194819840947, 103.97716823318481), true)
     }
 
-    fun drawArea(latLngs:List<LatLng> ){
-        if(latLngs.size>3){
-            polygon.remove()
+    override fun onResume() {
+        super.onResume()
+        if(position == -1){
+            Consumer.addObserverMap(object : DataListSource.getDataCallBack {  //在线
+                override fun dataGet(dataList: ByteArray) {
+                    if (dataList.size == 0) {
+                        drawArea(SysApplication.alarmArea)
+                    } else {
+                        var dataList1 = RequestBuildUtil.unPack(dataList)
+                        var s = String(dataList1)
+                        var ss = ReceiveBody.initialParse(s, "|")
+                        loop@ for (i in 0..6) {
+                            var string = ""
+                            when (i) {
+                                0 -> string = "无人机ID： " + ss[0]
+                                1 -> string = "频率：" + ss[1]
+                                2 -> string = "经度：" + ss[2]
+                                3 -> string = "纬度：" + ss[3]
+                                4 -> string = "俯仰角：" + ss[4]
+                                5 -> string = "日期时间：" + ss[5]
+                                6 -> string = "是否报警：" + ss[6]
+                            }
+                            list.add(string)
+                        }
+                        drawOnMap(NobodyAirplaneData(ss[0], ss[1].toLong(), ss[2].toDouble(), ss[3].toDouble(), ss[4].toDouble(), ss[5], ss[6].toInt()), list)
+                    }
+                }
+
+                override fun error() {
+                }
+            })
+        }else{
+            Consumer.addUnLineObserverMap(object : DataListSource.getDataCallBack {//离线
+            override fun dataGet(dataList: ByteArray) {
+                Log.d("xiaomap", String(dataList))
+                var s = String(dataList)
+                var ss = ReceiveBody.initialParse(s, "|")
+                loop@ for (i in 0..6) {
+                    var string = ""
+                    when (i) {
+                        0 -> string = "无人机ID： " + ss[0]
+                        1 -> string = "频率：" + ss[1]
+                        2 -> string = "经度：" + ss[2]
+                        3 -> string = "纬度：" + ss[3]
+                        4 -> string = "俯仰角：" + ss[4]
+                        5 -> string = "日期时间：" + ss[5]
+                        6 -> string = "是否报警：" + ss[6]
+                    }
+                    list.add(string)
+                }
+                drawOnMap(NobodyAirplaneData(ss[0], ss[1].toLong(), ss[2].toDouble(), ss[3].toDouble(), ss[4].toDouble(), ss[5], ss[6].toInt()), list)
+            }
+
+                override fun error() {
+
+                }
+            })
+            Consumer.UnonLine(SysApplication.datahash[0])
+            if (SysApplication.alarmArea.size > 0) {
+//            drawLine(SysApplication.alarmArea)
+                drawArea(SysApplication.alarmArea)
+            }
+        }
+    }
+
+    fun drawOnMap(nobodyAirplaneData: NobodyAirplaneData, list: List<String>) {
+        changeCamera(LatLng(nobodyAirplaneData.lat, nobodyAirplaneData.lon), true)
+        addMarkersToMap(LatLng(nobodyAirplaneData.lat, nobodyAirplaneData.lon))
+        mapListAdapter.setDataList(list)
+        mapListAdapter.notifyDataSetChanged()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Consumer.addObserverMap(null)
+        Consumer.addUnLineObserverMap(null)
+    }
+
+    fun drawArea(latLngs: List<LatLng>) {
+//        if (latLngs.size > 3) {
+//            polygon.remove()
+//        }
+//                addMarkersToMap(latLngs[1])
+        if (polygon != null) {
+            polygon!!.remove()
         }
         val polygonOptions1 = PolygonOptions()
-                .fillColor(Color.parseColor("#22000000")).strokeColor(Color.RED).strokeWidth(10f)
+                .fillColor(Color.parseColor("#11000000")).strokeColor(Color.RED).strokeWidth(10f)
         polygonOptions1.addAll(latLngs)
         polygon = aMap!!.addPolygon(polygonOptions1)
+        changeCamera(latLngs[latLngs.lastIndex], false)
     }
 
     private fun shootScreen() {
@@ -218,18 +306,43 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
         }
     }
 
-    private fun changeCamera(aMap: AMap, latLng: LatLng) { //改变地图坐标位置
-        aMap!!.moveCamera(CameraUpdateFactory.newCameraPosition(
-                CameraPosition.builder()
-                        .target(latLng)
-                        .tilt(18f)//目标区域倾斜度
-                        .zoom(30f)//缩放级别
-                        .bearing(30f)//旋转角度
-                        .build()))
+    private fun changeCamera(latLng: LatLng, room: Boolean) { //改变地图坐标位置
+
+//        val builder = CameraPosition.builder().target(latLng)
+//                .tilt(18f)//目标区域倾斜度
+//                .zoom(14f)//缩放级别
+//                .bearing(30f)//旋转角度
+//
+//        val cls = builder.javaClass
+//        val field = cls.getDeclaredField("zoom")
+//        field.isAccessible = true
+//        var ss = field.get(builder)
+        var zoom = aMap!!.getCameraPosition().zoom
+
+        if (room) {
+            aMap!!.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.builder()
+                            .target(latLng)
+                            .tilt(18f)//目标区域倾斜度
+                            .zoom(17f)//缩放级别
+                            .bearing(30f)//旋转角度
+                            .build()))
+        } else {
+            aMap!!.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.builder()
+                            .target(latLng)
+                            .tilt(18f)//目标区域倾斜度
+                            .zoom(zoom)//缩放级别
+                            .bearing(30f)//旋转角度
+                            .build()))
+        }
+
     }
 
     private fun drawLine(latlngs: MutableList<LatLng>) {  //画线
-        polyline = aMap!!.addPolyline(PolylineOptions().addAll(latlngs).width(14f).color(Color.argb(140, 33, 77, 66)))
+        polyline = aMap!!.addPolyline(PolylineOptions().addAll(latlngs).width(20f).color(Color.argb(140, 33, 77, 66)))
+//        addMarkersToMap(latlngs[1])
+        changeCamera(latlngs[latlngs.lastIndex], false)
     }
 
     private fun drawArc(latLng1: LatLng, latLng2: LatLng, latLng3: LatLng) {  //三个点画圆弧
@@ -240,7 +353,7 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
     }
 
     var pointcan: Boolean = true
-    lateinit var polyline: Polyline
+    var polyline: Polyline? = null
     private val markers: MutableList<Marker> = ArrayList()
     lateinit var mapDistanceTe: TextView
     private fun addMarkersToMapUser(latLng: LatLng) {  //定点化标志
@@ -254,14 +367,16 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
 
     private fun clear() {
         latLngsuser.clear()
-        polyline.remove()
-        for (marke in markers) {
-            if (aMap != null) {
-                marke.destroy()
+        if (polyline != null) {
+            polyline!!.remove()
+            for (marke in markers) {
+                if (aMap != null) {
+                    marke.destroy()
+                }
             }
+            pointcan = true
+            mapDistanceTe.setText("")
         }
-        pointcan = true
-        mapDistanceTe.setText("")
     }
 
     private fun addToPoint(latLng: LatLng) {

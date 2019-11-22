@@ -1,12 +1,15 @@
 package com.example.uav_client.Data.Main
 
 class  MainDataInfo {
-    internal var majorString: String
+    internal var Starttime: String
 
-    internal var userType: String
+    internal var endTiem: String
 
-    constructor(majorString: String, userType: String) {
-        this.majorString = majorString
-        this.userType = userType
+    internal var id:String
+
+    constructor(id:String,Start: String, end: String) {
+        this.id = id
+        this.Starttime = Start
+        this.endTiem = end
     }
 }

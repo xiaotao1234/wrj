@@ -5,6 +5,6 @@ class Datastatic {
         @JvmStatic
         val IP = "192.168.1.103"
         @JvmStatic
-        val PORT =  17217
+        val PORT = 17217
     }
 }

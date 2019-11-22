@@ -1,71 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainPageView.MainActivity">
+    android:layout_height="match_parent">
 
-    <RelativeLayout
-        android:layout_marginTop="@dimen/dp_14"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dp_40"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="@dimen/dp_40"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="@dimen/dp_40"
-            android:id="@+id/back"
-            android:padding="@dimen/dp_12"
-            android:src="@drawable/back_black"
-            android:layout_marginStart="@dimen/dp_3"/>
-        <TextView
-            android:id="@+id/user"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="用户管理"
-            android:textStyle="bold"
-            android:textSize="@dimen/dp_12"
-            android:layout_marginStart="@dimen/dp_50"
-            android:padding="@dimen/dp_10"
-            android:textColor="@color/black" />
-        <ImageView
-            android:id="@+id/search"
-            android:layout_width="@dimen/dp_39"
-            android:layout_height="@dimen/dp_39"
-            android:src="@drawable/search"
-            android:padding="@dimen/dp_10"
-            android:background="@drawable/button_bg_black"
-            android:layout_toStartOf="@id/add_user"
-            android:layout_marginEnd="@dimen/dp_10"/>
-        <ImageView
-            android:id="@+id/add_user"
-            android:layout_width="@dimen/dp_39"
-            android:layout_height="@dimen/dp_39"
-            android:src="@drawable/add_user"
-            android:padding="@dimen/dp_10"
-            android:layout_alignParentEnd="true"
-            android:background="@drawable/button_bg_black"
-            android:layout_marginEnd="@dimen/dp_10"/>
-        <View
-            android:layout_alignParentBottom="true"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#22000000"/>
-    </RelativeLayout>
+            android:layout_marginTop="@dimen/dp_14"
+            android:orientation="horizontal">
 
-    <com.example.uav_client.View.refreshV
-        android:id="@+id/ref_layout"
+            <ImageView
+                android:id="@+id/back"
+                android:layout_width="@dimen/dp_40"
+                android:layout_height="@dimen/dp_40"
+                android:layout_marginStart="@dimen/dp_3"
+                android:padding="@dimen/dp_12"
+                android:src="@drawable/back_black" />
+
+            <TextView
+                android:id="@+id/user"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/dp_50"
+                android:gravity="center"
+                android:padding="@dimen/dp_10"
+                android:text="用户管理"
+                android:textColor="@color/black"
+                android:textSize="@dimen/dp_12"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/search"
+                android:layout_width="@dimen/dp_39"
+                android:layout_height="@dimen/dp_39"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:layout_toStartOf="@id/add_user"
+                android:background="@drawable/button_bg_black"
+                android:padding="@dimen/dp_10"
+                android:src="@drawable/search" />
+
+            <ImageView
+                android:id="@+id/add_user"
+                android:layout_width="@dimen/dp_39"
+                android:layout_height="@dimen/dp_39"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:background="@drawable/button_bg_black"
+                android:padding="@dimen/dp_10"
+                android:src="@drawable/add_user" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_alignParentBottom="true"
+                android:background="#22000000" />
+        </RelativeLayout>
+
+        <com.example.uav_client.View.refreshV
+            android:id="@+id/ref_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/user_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#FFFFFF" />
+
+        </com.example.uav_client.View.refreshV>
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/cap"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="#44000000"/>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/user_list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#FFFFFF" />
-
-    </com.example.uav_client.View.refreshV>
-
-</LinearLayout>
+</FrameLayout>

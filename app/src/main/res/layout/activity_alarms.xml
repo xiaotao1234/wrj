@@ -36,6 +36,11 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/dp_200"
         android:background="#00FFFFFF"/>
+    <com.example.uav_client.View.SearchView
+        android:id="@+id/load_view"
+        android:layout_width="@dimen/dp_30"
+        android:layout_height="@dimen/dp_30"
+        android:layout_gravity="center_horizontal"/>
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

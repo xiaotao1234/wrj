@@ -3,17 +3,52 @@
     android:id="@+id/data_layout"
     android:layout_width="match_parent"
     android:layout_height="@dimen/dp_40"
-    android:orientation="vertical"
-    android:background="#0B000000">
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/text"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="@dimen/dp_39"
-        android:layout_gravity="center_vertical"
-        android:layout_marginStart="@dimen/dp_10"
-        android:gravity="center"
-        android:textColor="@color/black" />
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/text"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/dp_39"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/dp_10"
+            android:gravity="center"
+            android:textColor="@color/black" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_toRightOf="@id/text"
+            android:orientation="vertical"
+            android:layout_marginStart="@dimen/dp_10">
+            <TextView
+                android:id="@+id/start_time"
+                android:layout_toRightOf="@id/text"
+                android:layout_marginStart="@dimen/dp_10"
+                android:layout_width="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:textSize="@dimen/dp_9"
+                android:textColor="@color/black"
+                android:layout_height="0dp"/>
+
+            <TextView
+                android:id="@+id/end_time"
+                android:layout_width="wrap_content"
+                android:layout_toRightOf="@id/text"
+                android:layout_marginStart="@dimen/dp_10"
+                android:textSize="@dimen/dp_9"
+                android:textColor="@color/black"
+                android:gravity="center_vertical"
+                android:layout_weight="1"
+                android:layout_height="0dp" />
+        </LinearLayout>
+
+
+    </RelativeLayout>
 
     <View
         android:layout_width="match_parent"

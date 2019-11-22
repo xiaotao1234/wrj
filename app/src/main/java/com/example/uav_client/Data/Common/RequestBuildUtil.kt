@@ -1,5 +1,7 @@
 package com.example.uav_client.Data.Common
 
+import android.util.Log
+
 class RequestBuildUtil {
     companion object {
         var ALARMSQUARE: Int = 1
@@ -14,7 +16,11 @@ class RequestBuildUtil {
         var SEARCH_DAILY_RESULT: Int = 10
         var SEARCH_ALARM: Int = 11
         var SEARCH_ALARM_RESULT: Int = 12
-        var ERROR:ByteArray = addFrameHeader("",-1)
+        @JvmStatic
+        var SEARCH_UAV: Int = 13
+        @JvmStatic
+        var SEARCH_UAV_RESULT: Int = 14
+        var ERROR: ByteArray = addFrameHeader("", -1)
 
         fun transformRequestToByte(): ByteArray {
             var byteArray: ByteArray
@@ -38,15 +44,35 @@ class RequestBuildUtil {
             return bys
         }
 
-        fun unPack(byteArray: ByteArray): ByteArray? {
+        @JvmStatic
+        fun mergeData(s1:ByteArray,s2:ByteArray): ByteArray {
+            return s1+s2
+        }
+
+        @JvmStatic
+        fun unPack(byteArray: ByteArray): ByteArray {
 //            if(nigetPartByteArray(byteArray,0,3) == sumHex(0xEEEEEEEE,4)){
-            var byteArray1 = byteArray.copyOfRange(4,8)
+//            var byteArray1 = byteArray.copyOfRange(4, 8)
+//            var b = byteArray.copyOfRange(4, 8)
             var length = bytesToIntLittle(byteArray.copyOfRange(4, 8))
             return byteArray.copyOfRange(9, (9 + length - 5))
         }
 
         @JvmStatic
-        fun unPackrequestCode(byteArray: ByteArray,int: Int):Int{
+        fun unPackString(byteArray: ByteArray): String {
+            return String(unPack(byteArray))
+        }
+
+        @JvmStatic
+        fun getDataLength(byteArray: ByteArray):Int{
+            if(byteArray.size>9){
+                return bytesToIntLittle(byteArray.copyOfRange(4,8))
+            }
+            return  0
+        }
+
+        @JvmStatic
+        fun unPackrequestCode(byteArray: ByteArray, int: Int): Int {
             return byteArray[int].toInt() and 0xFF
         }
 
@@ -59,6 +85,15 @@ class RequestBuildUtil {
             return result
         }
 
+        fun overturn(byte: ByteArray) {
+            var by = ByteArray(4)
+            for (byte1 in byte) {
+                if (byte1.toInt() and 0xFF != 0){
+
+                }
+            }
+        }
+
         fun sumHex(tu5: Long, length: Int): ByteArray {
             var length = length
             val bytes5 = ByteArray(length)
@@ -69,6 +104,7 @@ class RequestBuildUtil {
             return bytes5
         }
 
+        @JvmStatic
         fun nigetPartByteArray(b: ByteArray, start: Int, stop: Int): ByteArray {
             val c = ByteArray(stop - start + 1)
             for (i in stop downTo start) {
@@ -77,14 +113,30 @@ class RequestBuildUtil {
             return c
         }
 
+        @JvmStatic
+        fun fourBytesToInt(b: ByteArray): Int {
+            var intValue = 0
+            val c = b[0].toInt() and 0xff shl 24
+            for (i in b.indices) {
+                intValue += b[i].toInt() and 0xFF shl 8 * (3 - i)
+            }
+            return intValue
+        }
+
+        @JvmStatic
         fun bytesToIntLittle(src: ByteArray): Int {
+//            for(byte in src){
+//                var s = byte.toInt() and 0xFF
+//                Log.d("xiao", s.toString())
+//            }
             val value: Int
             value = (src[0].toInt() and 0xFF
                     or (src[1].toInt() and 0xFF shl 8)
                     or (src[2].toInt() and 0xFF shl 16)
-                    or (src[3].toInt() and 0xFF shl 24))
+                    or (src[3].toInt() and 0xFF shl 24) )
             return value
         }
+
 
         fun fourBytesToLong(b: ByteArray): Long {
             var intValue = 0

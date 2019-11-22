@@ -9,7 +9,7 @@ class DataListSourceImpl(var appExecutors: AppExecutors,var dataschdule: dataSch
     override fun getData(getDataCallBack: DataListSource.getDataCallBack,request:String,requestCode:Int) {
         val runnable = Runnable {
             Consumer(requestCode,getDataCallBack,appExecutors)
-            val datalist:ByteArray = dataschdule.getDataInternet(request,requestCode,appExecutors,getDataCallBack)
+            dataschdule.getDataInternet(request,requestCode,appExecutors,getDataCallBack)
 //            appExecutors.mainThread().execute { getDataCallBack.dataGet(datalist) }
         }
         appExecutors.networkIO().execute(runnable)

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:layout_marginTop="@dimen/dp_17"
     android:orientation="vertical"
-    tools:context=".MainPageView.MainActivity">
+    tools:context=".MainActivity">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -98,7 +98,11 @@
             android:layout_height="match_parent"
             android:layout_marginTop="@dimen/dp_10"
             android:background="@color/write" />
-
+        <com.amap.api.maps.MapView
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_200"
+            android:layout_gravity="bottom"/>
     </com.example.uav_client.View.refreshV>
 
 </LinearLayout>

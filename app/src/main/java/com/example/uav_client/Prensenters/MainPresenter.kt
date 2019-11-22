@@ -25,7 +25,7 @@ class MainPresenter : MainTaskDetailContract.Presenter {
         if(firstIn){
             datasource!!.getDataMem(object :DataListSource.getDataCallBack{
                 override fun dataGet(dataList: ByteArray) {
-                    mainActivity ?.showList(dataList)
+                    mainActivity ?.showList(dataList,1)
                 }
 
                 override fun error() {
@@ -35,7 +35,7 @@ class MainPresenter : MainTaskDetailContract.Presenter {
         }
         datasource!!.getData(object : DataListSource.getDataCallBack {
             override fun dataGet(dataList: ByteArray) {
-                mainActivity?.showList(RequestBuildUtil.unPack(dataList)!!)
+                mainActivity?.showList(RequestBuildUtil.unPack(dataList)!!,RequestBuildUtil.unPackrequestCode(dataList,8))
             }
 
             override fun error() {

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.inputmethod.EditorInfo
@@ -16,11 +17,18 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.amap.api.maps.AMap
+import com.amap.api.maps.MapView
+import com.amap.api.maps.UiSettings
+import com.amap.api.maps.model.LatLng
 import com.amap.api.maps.offlinemap.OfflineMapActivity
 import com.example.uav_client.*
 import com.example.uav_client.Adapter.MainPageAdapter
+import com.example.uav_client.Application.BaseActivity
 import com.example.uav_client.Application.SysApplication
+import com.example.uav_client.Application.SysApplication.Companion.datahash
 import com.example.uav_client.Contracts.MainTaskDetailContract
+import com.example.uav_client.Data.Common.ReceiveBody
 import com.example.uav_client.Data.Common.User
 import com.example.uav_client.Data.Main.MainDataInfo
 import com.example.uav_client.Prensenters.MainPresenter
@@ -28,11 +36,16 @@ import com.example.uav_client.View.airplanePath
 import com.example.uav_client.View.refreshV
 import com.google.android.material.navigation.NavigationView
 import java.util.*
+import kotlin.collections.ArrayList
 
-class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
+class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClickListener {
+
     internal lateinit var recyclerView: RecyclerView
     internal lateinit var listAdapter: MainPageAdapter
     internal lateinit var refreshV: refreshV
+    private var aMap: AMap? = null
+    lateinit var mUiSettings: UiSettings
+    internal lateinit var map: MapView
     internal lateinit var editText: EditText
     internal lateinit var usernameTop: TextView
     internal lateinit var userRight: TextView
@@ -48,30 +61,41 @@ class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
     internal lateinit var airplaypath: airplanePath
     internal var time: Long = 0
 
-    override fun showList(dataList: ByteArray) {
-//        this.datalist = dataList as MutableList<MainDataInfo>
-//        listAdapter = MainPageAdapter(datalist,this)
-//        recyclerView.layoutManager = LinearLayoutManager(this)
-//        recyclerView.adapter = listAdapter
-//        refreshV.searchView.end()
-//        recyclerView.translationY = 0F
+
+    override fun showList(dataList: ByteArray, requestCode: Int) {
+        this.datalist.clear()
+        var s = String(dataList)
+        var lis = ReceiveBody.initialParse(s,"#")
+        for(l in lis){
+            var list1 = ReceiveBody.initialParse(l,"!")
+            datalist.add(MainDataInfo(list1[0],list1[1],list1[2]))
+            datahash.add(list1[3])
+        }
+        listAdapter = MainPageAdapter(datalist, this)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = listAdapter
+        refreshV.searchView.end()
+        recyclerView.translationY = 0F
+
+        Log.d("history", String(dataList))
         Toast.makeText(this, "数据刷新成功", Toast.LENGTH_SHORT).show()
     }
 
     override fun release() {
+
     }
 
 
     override fun error() {
-        Toast.makeText(this,"网络异常",Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "网络异常", Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main1)
         hideHeader()
-        initView()
-        dataInit()
+        initView(savedInstanceState)
+//        dataInit()
         dataIntoView()
     }
 
@@ -95,6 +119,7 @@ class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
                 refreshV.top = firstCompletelyVisibleItemPosition == 0
                 val lastCompletelyVisibleItemPosition: Int = layoutManager.findLastCompletelyVisibleItemPosition()
                 if (lastCompletelyVisibleItemPosition == layoutManager.getItemCount() - 1) {
+
                 }
             }
         })
@@ -102,13 +127,14 @@ class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
         recyclerView.adapter = listAdapter
     }
 
-    private fun dataInit() {
-        presenter = MainPresenter(this)
-        var dp_50: Float = resources.getDimension(R.dimen.dp_50)
-        recyclerView.translationY = dp_50
-//        presenter.getData()
-        refreshV.searchView.start()
-    }
+//    private fun dataInit() {
+////        presenter = MainPresenter(this)
+//        var dp_50: Float = resources.getDimension(R.dimen.dp_50)
+//        recyclerView.translationY = dp_50
+////        presenter.getData()
+//        refreshV.searchView.start()
+////        presenter.getData("",13)
+//    }
 
 
     override fun onBackPressed() {
@@ -151,7 +177,12 @@ class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
         super.onResume()
     }
 
-    private fun initView() {
+    override fun onMapClick(p0: LatLng?) {
+        startActivity(Intent(this@MainActivity, MapActivity::class.java))
+    }
+
+    private fun initView(savedInstanceState: Bundle?) {
+        map = findViewById(R.id.map)
         refreshV = findViewById(R.id.ref_layout)
         refreshV.searchView.start()
         editText = findViewById(R.id.main_edit)
@@ -162,6 +193,13 @@ class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
         drawerLayout = findViewById(R.id.drawer_layout)
         menu = findViewById(R.id.menu)
         navigation = findViewById(R.id.nav_view)
+        map.onCreate(savedInstanceState)
+        if (aMap == null) {
+            aMap = map.map
+            aMap!!.setOnMapClickListener(this)
+            mUiSettings = aMap!!.uiSettings
+            mUiSettings.isScrollGesturesEnabled = false
+        }
         editText.setOnClickListener {
             showSoftInputFromWindow(editText)
         }
@@ -212,7 +250,9 @@ class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
             }
         }
         search.setOnClickListener {
-            searchChange()
+            presenter = MainPresenter(this@MainActivity)
+            presenter.getData("", 13)
+//            searchChange()
         }
         searchLay.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
@@ -226,6 +266,8 @@ class MainActivity : AppCompatActivity(), MainTaskDetailContract.View {
                     recyclerView.translationY = dp_50
 //                    presenter.getData(RequestBuildUtil.transformRequestToByte())
                     refreshV.searchView.start()
+                    presenter = MainPresenter(this@MainActivity)
+                    presenter.getData("", 13)
                 }
             }
         })

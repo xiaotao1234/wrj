@@ -34,14 +34,16 @@ class Threads {
                 if(socket==null){
                     releaseConnect()
                 }
+                Log.d("xiao","0")
                 synchronized(ins) {
                     length = ins.available()
                     if (length > 0) {
+                        Log.d("datacome", length.toString())
                         byteArray = ByteArray(length)
                         ins.read(byteArray)
                         messages?.add(byteArray)
                         appExecutors?.networkIO()?.execute {
-                            Consumer.back(byteArray)
+                            Consumer.back(byteArray, String(byteArray))
                         }
                     }
                 }

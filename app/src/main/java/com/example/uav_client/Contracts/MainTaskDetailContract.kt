@@ -7,7 +7,7 @@ import com.example.uav_client.Data.Main.MainDataInfo
 interface MainTaskDetailContract {
 
     interface View : BaseView {
-        fun showList(dataList: ByteArray)
+        fun showList(dataList: ByteArray,requestCode: Int)
         fun error()
     }
 
