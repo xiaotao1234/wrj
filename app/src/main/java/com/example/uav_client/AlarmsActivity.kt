@@ -45,6 +45,7 @@ class AlarmsActivity : AppCompatActivity(),MainTaskDetailContract.View {
     private fun initData() {
         presenter = MainPresenter(this)
         presenter.getData("",RequestBuildUtil.SEARCH_ALARM)
+        searchView.visibility = View.VISIBLE
     }
 
     private fun initView() {

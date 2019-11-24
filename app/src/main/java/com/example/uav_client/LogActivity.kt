@@ -8,12 +8,14 @@ import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import com.example.uav_client.Contracts.MainTaskDetailContract
+import com.example.uav_client.Data.Common.ReceiveBody
 import com.example.uav_client.Data.Common.RequestBuildUtil
 import com.example.uav_client.Prensenters.MainPresenter
 
 class LogActivity : AppCompatActivity(),MainTaskDetailContract.View {
     lateinit var backIcon: ImageView
     lateinit var presenter:MainTaskDetailContract.Presenter
+    lateinit var loadIamgeView:ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,10 +28,12 @@ class LogActivity : AppCompatActivity(),MainTaskDetailContract.View {
     private fun initData() {
         presenter = MainPresenter(this)
         presenter.getData("",RequestBuildUtil.SEARCH_DAILY)
+        loadIamgeView.visibility = View.VISIBLE
     }
 
     private fun initView() {
         backIcon = findViewById(R.id.alarm_back)
+        loadIamgeView = findViewById(R.id.load_view)
         backIcon.setOnClickListener {
             this.finish()
         }
@@ -45,7 +49,10 @@ class LogActivity : AppCompatActivity(),MainTaskDetailContract.View {
     }
 
     override fun showList(dataList: ByteArray, requestCode: Int) {
+        loadIamgeView.visibility = View.GONE
         Log.d("dataLog", String(dataList))
+        var s = String(dataList)
+        var lis = ReceiveBody.initialParse(s,"|")
     }
 
     override fun error() {

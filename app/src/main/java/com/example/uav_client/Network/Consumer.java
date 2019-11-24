@@ -76,6 +76,7 @@ public class Consumer {
     }
 
     static byte[] temSave = new byte[0];
+    boolean end = false;
 
     public static void back(final byte[] bytes, String s) {
         if (RequestBuildUtil.fourBytesToInt(RequestBuildUtil.nigetPartByteArray(bytes, 0, 3)) != 0xEEEEEEEE) {
@@ -205,7 +206,9 @@ public class Consumer {
                             appExecutors.mainThread().execute(new Runnable() {
                                 @Override
                                 public void run() {
-                                    observerMaponLine.dataGet(s1.getBytes());
+                                    if (observerMaponLine != null) {
+                                        observerMaponLine.dataGet(s1.getBytes());
+                                    }
                                 }
                             });
                         } else {
@@ -218,12 +221,14 @@ public class Consumer {
                                 appExecutors.mainThread().execute(new Runnable() {
                                     @Override
                                     public void run() {
-                                        observerMaponLine.dataGet(s1.getBytes());
+                                        if (observerMaponLine != null) {
+                                            observerMaponLine.dataGet(s1.getBytes());
+                                        }
                                     }
                                 });
                             } catch (Exception e) {
                                 e.printStackTrace();
-                                Log.d("xiao","时间解析错误");
+                                Log.d("xiao", "时间解析错误");
                             }
                         }
                     }
@@ -231,5 +236,7 @@ public class Consumer {
             }
         });
     }
+
+
 
 }

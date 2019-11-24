@@ -203,7 +203,7 @@ class MapActivity : AppCompatActivity(), AMap.OnMapClickListener {
 
                 }
             })
-            Consumer.UnonLine(SysApplication.datahash[0])
+            Consumer.UnonLine(SysApplication.datahash[position])
             if (SysApplication.alarmArea.size > 0) {
 //            drawLine(SysApplication.alarmArea)
                 drawArea(SysApplication.alarmArea)

@@ -19,7 +19,7 @@ class Threads {
         lateinit var request: ByteArray
         var appExecutors: AppExecutors? = null
         var byteArray: ByteArray = ByteArray(0)
-        var messages: MutableList<ByteArray>?=null
+        var messages: MutableList<ByteArray>? = null
         var length: Int = 0
         var isSend: Boolean = false
         var runnable = Runnable {
@@ -31,10 +31,10 @@ class Threads {
             }
             sendRequest()
             while (true) {
-                if(socket==null){
+                if (socket == null) {
                     releaseConnect()
                 }
-                Log.d("xiao","0")
+                Log.d("xiao", "0")
                 synchronized(ins) {
                     length = ins.available()
                     if (length > 0) {
@@ -43,7 +43,8 @@ class Threads {
                         ins.read(byteArray)
                         messages?.add(byteArray)
                         appExecutors?.networkIO()?.execute {
-                            Consumer.back(byteArray, String(byteArray))
+                            mergeDatapackge(byteArray)
+//                            Consumer.back(byteArray, String(byteArray))
                         }
                     }
                 }
@@ -54,15 +55,15 @@ class Threads {
         }
 
         private fun sendRequest() {
-            if(socket!=null){
+            if (socket != null) {
                 ous.write(request)
                 ous.flush()
-            }else{
+            } else {
 
             }
         }
 
-        fun start(request: String, requestCode: Int, appExecutors: AppExecutors,callback:DataListSource.getDataCallBack) {
+        fun start(request: String, requestCode: Int, appExecutors: AppExecutors, callback: DataListSource.getDataCallBack) {
             this.request = RequestBuildUtil.addFrameHeader(request, requestCode)
             if (this.appExecutors == null) {
                 this.appExecutors = appExecutors
@@ -75,7 +76,7 @@ class Threads {
         }
 
         private fun releaseConnect() {
-            Log.d("xiao","release")
+            Log.d("xiao", "release")
             loop@ for (i in 1..3) {
                 try {
                     if (socket == null) {
@@ -89,6 +90,37 @@ class Threads {
                     }
                 } catch (e: Exception) {
                     Thread.sleep(1000)
+                }
+            }
+        }
+
+        internal var temSave = ByteArray(0)
+        internal var havelength: Int = 0
+        internal var totallenght: Int = 0
+        private fun mergeDatapackge(bytes: ByteArray) {
+            Log.d("bytelength", bytes.size.toString())
+            if (RequestBuildUtil.fourBytesToInt(RequestBuildUtil.nigetPartByteArray(bytes, 0, 3)) == -0x11111112) {
+                totallenght = RequestBuildUtil.getDataLength(bytes)+4
+                if (totallenght == bytes.size) {
+                    havelength = 0
+                    temSave = ByteArray(0)
+                    totallenght = 0
+                    Consumer.back(byteArray, String(byteArray))
+                } else {
+                    temSave = ByteArray(totallenght)
+                    System.arraycopy(bytes, 0, temSave, havelength, bytes.size)
+                    havelength += bytes.size
+                }
+            } else {
+                if (temSave.isNotEmpty()) {
+                    System.arraycopy(bytes, 0, temSave, havelength, bytes.size)
+                    havelength += bytes.size
+                    if (havelength == totallenght) {
+                        havelength = 0
+                        temSave = ByteArray(0)
+                        totallenght = 0
+                        Consumer.back(byteArray, String(byteArray))
+                    }
                 }
             }
         }
