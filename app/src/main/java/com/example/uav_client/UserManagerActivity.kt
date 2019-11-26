@@ -2,9 +2,7 @@ package com.example.uav_client
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.uav_client.R
 import android.os.Build
 import android.os.Handler
 import android.os.Message
@@ -12,7 +10,6 @@ import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +21,6 @@ import com.example.uav_client.Data.Common.RequestBuildUtil
 import com.example.uav_client.Data.Common.User
 import com.example.uav_client.Prensenters.MainPresenter
 import com.example.uav_client.View.refreshV
-import java.util.*
 import kotlin.collections.ArrayList
 
 
@@ -60,9 +56,9 @@ class UserManagerActivity : BaseActivity(), MainTaskDetailContract.View {
             userListdata.clear()
             var s = String(dataList)
             var runnable = Runnable {
-                var list = ReceiveBody.initialParse(s, ";")
+                var list = ReceiveBody.initialParse(s,";")
                 for (item in list) {
-                    var list1 = ReceiveBody.initialParse(item, "|")
+                    var list1 = ReceiveBody.initialParse(item,"|")
                     userListdata.add(User(list1[0], list1[1], list1[2], list1[3].toInt(), list1[4]))
                 }
                 handler.sendEmptyMessage(1)
@@ -71,7 +67,7 @@ class UserManagerActivity : BaseActivity(), MainTaskDetailContract.View {
             thread.start()
         } else if (requestCode == RequestBuildUtil.ADD_USER_RESULT) {
             var s = String(dataList)
-            var list1 = ReceiveBody.initialParse(s, "|")
+            var list1 = ReceiveBody.initialParse(s,"|")
             if (list1[1].toInt() == 1) {
                 if (list1[0].toInt() == 1 && list1.size >= 7) {
                     Log.d("datachange", 1.toString())

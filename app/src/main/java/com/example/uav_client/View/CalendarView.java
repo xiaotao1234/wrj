@@ -21,6 +21,8 @@ public class CalendarView extends CustomView {
     int STATE_2 = 2;//单个选中
     int STATE_3 = 3;//多个选中
     int state = 1;
+    enum STATE{
+    }
     String[] topText = {"日", "一", "二", "三", "四", "五", "六"};
     private Point point;
     private Point pointTouch;
@@ -144,7 +146,7 @@ public class CalendarView extends CustomView {
         dayBgPaint = new Paint();
         dayBgPaint.setAntiAlias(true);
         dayBgPaint.setStyle(Paint.Style.FILL);
-        dayBgPaint.setColor(Color.parseColor("#88DE47A6"));
+        dayBgPaint.setColor(Color.parseColor("#88777877"));
 
         calendar = Calendar.getInstance();
         calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), 1);
@@ -169,9 +171,9 @@ public class CalendarView extends CustomView {
                 break;
             case MotionEvent.ACTION_UP:
                 if (offsetY - downY < 20) {
-                    if (clickListener != null) {
-                        clickListener.Listner();
-                    }
+//                    if (clickListener != null) {
+//                        clickListener.Listner();
+//                    }
                 }
                 if (scrollFlag == false) {
                     if (state == STATE_1 || state == STATE_3) {
@@ -181,6 +183,9 @@ public class CalendarView extends CustomView {
                             state = STATE_2;
                         }
                         invalidate();
+                        if (clickListener != null) {
+                            clickListener.Listner();
+                        }
                     } else if (state == STATE_2) {
                         if (event.getY() > GridHeight * 2) {
                             pointTouch2.y = (int) (event.getY() / GridHeight);
@@ -192,6 +197,9 @@ public class CalendarView extends CustomView {
                             }
                         }
                         invalidate();
+                        if (clickListener != null) {
+                            clickListener.Listner();
+                        }
                     }
                 } else {
                     scrollFlag = false;

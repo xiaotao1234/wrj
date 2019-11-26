@@ -12,55 +12,64 @@ import android.view.ViewTreeObserver
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amap.api.maps.AMap
+import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.MapView
 import com.amap.api.maps.UiSettings
-import com.amap.api.maps.model.LatLng
+import com.amap.api.maps.model.*
 import com.amap.api.maps.offlinemap.OfflineMapActivity
-import com.example.uav_client.*
 import com.example.uav_client.Adapter.MainPageAdapter
 import com.example.uav_client.Application.BaseActivity
 import com.example.uav_client.Application.SysApplication
 import com.example.uav_client.Application.SysApplication.Companion.datahash
 import com.example.uav_client.Contracts.MainTaskDetailContract
+import com.example.uav_client.Data.Common.NobodyAirplaneData
 import com.example.uav_client.Data.Common.ReceiveBody
+import com.example.uav_client.Data.Common.RequestBuildUtil
 import com.example.uav_client.Data.Common.User
+import com.example.uav_client.Data.Main.DataListSource
 import com.example.uav_client.Data.Main.MainDataInfo
+import com.example.uav_client.Network.Consumer
 import com.example.uav_client.Prensenters.MainPresenter
 import com.example.uav_client.View.airplanePath
 import com.example.uav_client.View.refreshV
 import com.google.android.material.navigation.NavigationView
-import java.util.*
 import kotlin.collections.ArrayList
 
 class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClickListener {
 
     internal lateinit var recyclerView: RecyclerView
-    internal lateinit var listAdapter: MainPageAdapter
+    private lateinit var listAdapter: MainPageAdapter
     internal lateinit var refreshV: refreshV
     private var aMap: AMap? = null
     lateinit var mUiSettings: UiSettings
-    internal lateinit var map: MapView
-    internal lateinit var editText: EditText
-    internal lateinit var usernameTop: TextView
-    internal lateinit var userRight: TextView
+    private lateinit var map: MapView
+    private lateinit var editText: EditText
+    private lateinit var usernameTop: TextView
+    private lateinit var userRight: TextView
     internal var datalist: MutableList<MainDataInfo> = ArrayList()
-    internal lateinit var presenter: MainTaskDetailContract.Presenter
-    internal lateinit var searchLay: FrameLayout
-    internal lateinit var search: ImageView
-    internal lateinit var clearButton: ImageView
-    internal lateinit var drawerLayout: DrawerLayout
-    internal lateinit var menu: ImageView
-    internal lateinit var navigation: NavigationView
-    internal var flagStatus: Boolean = true
-    internal lateinit var airplaypath: airplanePath
-    internal var time: Long = 0
-
+    internal lateinit var presenter: MainPresenter
+    private lateinit var searchLay: FrameLayout
+    private lateinit var search: ImageView
+    private lateinit var clearButton: ImageView
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var menu: ImageView
+    private lateinit var navigation: NavigationView
+    private var flagStatus: Boolean = true
+    private lateinit var airplaypath: airplanePath
+    private var time: Long = 0
+    private var markerOption: MarkerOptions? = null
+    private lateinit var marker: Marker
+    var polygon: Polygon? = null
+    private val latLngs: ArrayList<LatLng>
+        get() {
+            val latLngs = ArrayList<LatLng>()
+            return latLngs
+        }
 
     override fun showList(dataList: ByteArray, requestCode: Int) {
         this.datalist.clear()
@@ -74,11 +83,15 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         listAdapter = MainPageAdapter(datalist, this)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = listAdapter
-        refreshV.searchView.end()
-        recyclerView.translationY = 0F
+        engAnimtions()
 
         Log.d("history", String(dataList))
         Toast.makeText(this, "数据刷新成功", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun engAnimtions() {
+        refreshV.searchView.end()
+        recyclerView.translationY = 0F
     }
 
     override fun release() {
@@ -168,14 +181,94 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
     }
 
     override fun onPause() {
-        super.onPause()
         airplaypath!!.flagstop = true
+        Consumer.addMainObserver(null)
+        super.onPause()
     }
 
     override fun onResume() {
         airplaypath!!.flagstop = false
         super.onResume()
+//        refreshV.postDelayed({ dataInit() },5000)
+        dataInit()
+        addObserver()
     }
+
+    private fun addObserver() {
+        Consumer.addMainObserver(object : DataListSource.getDataCallBack {  //在线
+            override fun dataGet(dataList: ByteArray) {
+                if (dataList.size == 0) {
+                    drawArea(SysApplication.alarmArea)
+                } else {
+                    var dataList1 = RequestBuildUtil.unPack(dataList)
+                    var s = String(dataList1)
+                    var ss = ReceiveBody.initialParse(s, "|")
+                    drawOnMap(NobodyAirplaneData(ss[0], ss[1].toLong(), ss[2].toDouble(), ss[3].toDouble(), ss[4].toDouble(), ss[5], ss[6].toInt()))
+                }
+            }
+            override fun error() {
+            }
+        })
+    }
+
+    fun drawOnMap(nobodyAirplaneData: NobodyAirplaneData) {
+        changeCamera(LatLng(nobodyAirplaneData.lat, nobodyAirplaneData.lon), true)
+        addMarkersToMap(LatLng(nobodyAirplaneData.lat, nobodyAirplaneData.lon))
+    }
+
+    private fun changeCamera(latLng: LatLng, room: Boolean) { //改变地图坐标位置
+        var zoom = aMap!!.getCameraPosition().zoom
+        if (room) {
+            aMap!!.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.builder()
+                            .target(latLng)
+                            .tilt(18f)//目标区域倾斜度
+                            .zoom(17f)//缩放级别
+                            .bearing(30f)//旋转角度
+                            .build()))
+        } else {
+            aMap!!.moveCamera(CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.builder()
+                            .target(latLng)
+                            .tilt(18f)//目标区域倾斜度
+                            .zoom(zoom)//缩放级别
+                            .bearing(30f)//旋转角度
+                            .build()))
+        }
+    }
+
+    private fun addMarkersToMap(latLng: LatLng) {  //定点化标志
+        latLngs.add(latLng)
+        markerOption = MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.point))
+                .position(latLng)
+                .draggable(true)
+        marker = aMap!!.addMarker(markerOption)
+    }
+
+    fun drawArea(latLngs: List<LatLng>) {
+//        if (latLngs.size > 3) {
+//            polygon.remove()
+//        }
+//                addMarkersToMap(latLngs[1])
+        if (polygon != null) {
+            polygon!!.remove()
+        }
+        val polygonOptions1 = PolygonOptions()
+                .fillColor(Color.parseColor("#11000000")).strokeColor(Color.RED).strokeWidth(10f)
+        polygonOptions1.addAll(latLngs)
+        polygon = aMap!!.addPolygon(polygonOptions1)
+        changeCamera(latLngs[latLngs.lastIndex], false)
+    }
+
+    private fun dataInit() {
+        presenter = MainPresenter(this)
+        presenter.getData("", RequestBuildUtil.SEARCH_UAV)
+    }
+
+//    private fun initData() {
+//        presenter = MainPresenter(this)
+//        presenter!!.getData("", RequestBuildUtil.SEARCH_USER_LIST)
+//    }
 
     override fun onMapClick(p0: LatLng?) {
         startActivity(Intent(this@MainActivity, MapActivity::class.java))
@@ -250,9 +343,8 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
             }
         }
         search.setOnClickListener {
-            presenter = MainPresenter(this@MainActivity)
-            presenter.getData("", 13)
-//            searchChange()
+            dataInit()
+            searchChange()
         }
         searchLay.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
@@ -261,6 +353,7 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         })
         refreshV.setListener(object : refreshV.HeadListener {
             override fun callback() {
+                Log.d("refreshtouchListener","come")
                 if (!refreshV.searchView.isRunning) {
                     var dp_50: Float = resources.getDimension(R.dimen.dp_50)
                     recyclerView.translationY = dp_50
@@ -268,9 +361,12 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
                     refreshV.searchView.start()
                     presenter = MainPresenter(this@MainActivity)
                     presenter.getData("", 13)
+                    dataInit()
                 }
             }
         })
+        engAnimtions()
+        refreshV.searchView.start()
     }
 
     private fun ViewTreeObserver.OnGlobalLayoutListener.hideEdit() {

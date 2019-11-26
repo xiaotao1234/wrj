@@ -43,6 +43,7 @@ class Threads {
                         ins.read(byteArray)
                         messages?.add(byteArray)
                         appExecutors?.networkIO()?.execute {
+                            Log.d("datacome","network")
                             mergeDatapackge(byteArray)
 //                            Consumer.back(byteArray, String(byteArray))
                         }
@@ -55,11 +56,15 @@ class Threads {
         }
 
         private fun sendRequest() {
-            if (socket != null) {
-                ous.write(request)
-                ous.flush()
-            } else {
+            try {
+                if (socket != null) {
+                    ous.write(request)
+                    ous.flush()
+                } else {
 
+                }
+            }catch(e:Exception){
+                e.printStackTrace()
             }
         }
 
@@ -125,5 +130,4 @@ class Threads {
             }
         }
     }
-
 }

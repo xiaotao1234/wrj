@@ -1,7 +1,6 @@
 package com.example.uav_client.Data.Common
 
 import com.amap.api.maps.model.LatLng
-import com.example.uav_client.Application.SysApplication
 
 class ReceiveBody {
     companion object {

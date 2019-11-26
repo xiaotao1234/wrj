@@ -26,7 +26,9 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <activity
             android:name=".AlarmsActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
+
+        </activity>
         <activity
             android:name=".MapUtilActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />

@@ -30,8 +30,8 @@ class MainPageAdapter(var datalist: List<MainDataInfo>, var mainActivity: MainAc
 
     override fun onBindViewHolder(holder: viewholder, position: Int) {
         holder.textView.text = datalist!![position].id
-        holder.start.text = "开始时间"+datalist!![position].Starttime
-        holder.end.text = "结束时间"+datalist!![position].endTiem
+        holder.start.text = "开始时间:"+datalist!![position].Starttime
+        holder.end.text = "结束时间:"+datalist!![position].endTiem
         holder.linearlayout.setOnClickListener {
             var intent = Intent(mainActivity, MapActivity::class.java)
             intent.putExtra("id",position)

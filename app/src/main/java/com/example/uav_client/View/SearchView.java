@@ -51,8 +51,8 @@ public class SearchView extends View {
     }
 
     public void start() {
-        initAnimator();
         mCurrentState = State.STARTING;
+        initAnimator();
         mStartingAnimator.start();
     }
 
@@ -68,6 +68,10 @@ public class SearchView extends View {
         mCurrentState = State.ENDING;
         mStartingAnimator.end();
         mStartingAnimator.cancel();
+        mSearchingAnimator.end();
+        mSearchingAnimator.cancel();
+        mEndingAnimator.end();
+        mEndingAnimator.cancel();
     }
 
     // 这个视图拥有的状态

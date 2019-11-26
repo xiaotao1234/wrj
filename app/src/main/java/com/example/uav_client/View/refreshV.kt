@@ -58,19 +58,28 @@ class refreshV : FrameLayout {
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
+        Log.d("refreshtouchListener","ontouch")
         when (event!!.action) {
             MotionEvent.ACTION_DOWN -> {
                 down = event.y.toInt()
                 up = 0
             }
             MotionEvent.ACTION_UP -> {
+                Log.d("refreshtouchListener","down:"+down)
+                Log.d("refreshtouchListener","down:"+up)
+                up = event.y.toInt()
+                if (up - down > dp_100) {
+                    headListener!!.callback()
+                }
+            }
+            MotionEvent.ACTION_CANCEL -> {
                 up = event.y.toInt()
                 if (up - down > dp_100) {
                     headListener!!.callback()
                 }
             }
         }
-        return super.onTouchEvent(event)
+        return true
     }
 
     interface HeadListener {

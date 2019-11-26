@@ -31,6 +31,7 @@ public class Consumer {
     private static List<Consumer> consumerPool = new ArrayList<>();
     private static DataListSource.getDataCallBack observerMap = null;
     private static DataListSource.getDataCallBack observerMaponLine = null;
+    private static DataListSource.getDataCallBack mainobserver = null;
 
     int requestCode;
 
@@ -66,6 +67,10 @@ public class Consumer {
         Consumer.observerMaponLine = observerMap;
     }
 
+    public static void addMainObserver(DataListSource.getDataCallBack observerMap) {
+        Consumer.mainobserver = observerMap;
+    }
+
     public static Consumer getConsumer(int requestCode) {
         for (Consumer consumer : consumerPool) {
             if (consumer.requestCode == requestCode) {
@@ -79,15 +84,17 @@ public class Consumer {
     boolean end = false;
 
     public static void back(final byte[] bytes, String s) {
-        if (RequestBuildUtil.fourBytesToInt(RequestBuildUtil.nigetPartByteArray(bytes, 0, 3)) != 0xEEEEEEEE) {
-            if (temSave.length != 0) {
-                BackToMain(RequestBuildUtil.mergeData(temSave, bytes), 14);
-                return;
-            }
-        }
+        Log.d("datacome","back");
+//        if (RequestBuildUtil.fourBytesToInt(RequestBuildUtil.nigetPartByteArray(bytes, 0, 3)) != 0xEEEEEEEE) {
+//            if (temSave.length != 0) {
+//                BackToMain(RequestBuildUtil.mergeData(temSave, bytes), 14);
+//                return;
+//            }
+//        }
         int requestCode = RequestBuildUtil.unPackrequestCode(bytes, 8);
+        Log.d("datacomere", String.valueOf(requestCode));
         if (requestCode == 1) {
-            SysApplication.setAlarmArea(ReceiveBody.getAlarm(ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes), ";")));
+            SysApplication.setAlarmArea(ReceiveBody.getAlarm(ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes),";")));
             if (observerMap != null) {
                 appExecutors.mainThread().execute(new Runnable() {
                     @Override
@@ -105,9 +112,16 @@ public class Consumer {
                         observerMap.dataGet(bytes);
                     }
                 });
+            }else if(mainobserver != null){
+                appExecutors.mainThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        mainobserver.dataGet(bytes);
+                    }
+                });
             }
 
-            final List<String> lis = ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes), "|");
+            final List<String> lis = ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes),"|");
             if (Integer.parseInt(lis.get(lis.size() - 1)) == 1) {
                 appExecutors.mainThread().execute(new Runnable() {
                     @Override
@@ -185,6 +199,13 @@ public class Consumer {
         return false;
     }
 
+    public static void stringToTime(List<String> stringList){
+        List<Date> dateList = new ArrayList<>();
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    }
+
     public static void UnonLine(final String s) {
         appExecutors.networkIO().execute(new Runnable() {
             @Override
@@ -236,6 +257,7 @@ public class Consumer {
             }
         });
     }
+
 
 
 
