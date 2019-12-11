@@ -27,11 +27,11 @@ class UserManagerAdapter(var userList:List<User>) : RecyclerView.Adapter<UserMan
     }
 
     override fun onBindViewHolder(holder: viewholder, position: Int) {
-        holder.textView.setText(userList[position].name)
-        holder.typetextView.setText(if(userList[position].type.equals(User.NORMAL_USER)) "普通用户" else "管理员")
-        holder.relativeLayout.setBackgroundColor(if(userList[position].type.equals(User.NORMAL_USER))
+        holder.textView.text = userList[position].name
+        holder.typetextView.text = if(userList[position].type == User.NORMAL_USER) "普通用户" else "管理员"
+        holder.relativeLayout.setBackgroundColor(if(userList[position].type == User.NORMAL_USER)
             Color.parseColor("#0B000000") else Color.parseColor("#00000000"))
-        holder.userIma.setImageResource(if(userList[position].type.equals(User.NORMAL_USER)) R.drawable.normal_user else R.drawable.manager_user)
+        holder.userIma.setImageResource(if(userList[position].type == User.NORMAL_USER) R.drawable.normal_user else R.drawable.manager_user)
         holder.relativeLayout.setOnClickListener {
             layoutClickListener!!.callback(position)
         }

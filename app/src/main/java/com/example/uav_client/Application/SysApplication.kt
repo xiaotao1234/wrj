@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import com.amap.api.maps.model.LatLng
 import com.example.uav_client.Data.Common.User
+import com.example.uav_client.Network.Threads
 import java.util.HashMap
 
 class SysApplication : Application() {
@@ -22,6 +23,8 @@ class SysApplication : Application() {
         @JvmStatic
         var alarmArea: MutableList<LatLng> = ArrayList()
         var datahash: MutableList<String> = ArrayList()
+        @JvmStatic
+        var stationItem: MutableList<String> = ArrayList()
         lateinit var activity1:BaseActivity
     }
 
@@ -61,6 +64,7 @@ class SysApplication : Application() {
     override fun onTerminate() {
         //注销这个接口。
         unregisterActivityLifecycleCallbacks(activityLifecycleCallbacks)
+        Threads.exit()
         super.onTerminate()
     }
 }

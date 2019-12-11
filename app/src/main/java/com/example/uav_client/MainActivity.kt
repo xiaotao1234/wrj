@@ -1,11 +1,16 @@
 package com.example.uav_client
 
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
@@ -27,17 +32,16 @@ import com.example.uav_client.Application.BaseActivity
 import com.example.uav_client.Application.SysApplication
 import com.example.uav_client.Application.SysApplication.Companion.datahash
 import com.example.uav_client.Contracts.MainTaskDetailContract
-import com.example.uav_client.Data.Common.NobodyAirplaneData
-import com.example.uav_client.Data.Common.ReceiveBody
-import com.example.uav_client.Data.Common.RequestBuildUtil
-import com.example.uav_client.Data.Common.User
+import com.example.uav_client.Data.Common.*
 import com.example.uav_client.Data.Main.DataListSource
 import com.example.uav_client.Data.Main.MainDataInfo
 import com.example.uav_client.Network.Consumer
+import com.example.uav_client.Network.Threads
 import com.example.uav_client.Prensenters.MainPresenter
 import com.example.uav_client.View.airplanePath
 import com.example.uav_client.View.refreshV
 import com.google.android.material.navigation.NavigationView
+import java.util.*
 import kotlin.collections.ArrayList
 
 class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClickListener {
@@ -56,6 +60,10 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
     private lateinit var searchLay: FrameLayout
     private lateinit var search: ImageView
     private lateinit var clearButton: ImageView
+    var searchList: MutableList<MainDataInfo> = ArrayList()
+    private val stationList: MutableList<Station> = ArrayList()
+    private val stationMarkerList: MutableList<Marker> = ArrayList()
+    private var markerOptionStation: MarkerOptions? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var menu: ImageView
     private lateinit var navigation: NavigationView
@@ -64,20 +72,21 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
     private var time: Long = 0
     private var markerOption: MarkerOptions? = null
     private lateinit var marker: Marker
+    var markerList: MutableList<Marker> = LinkedList()
     var polygon: Polygon? = null
-    private val latLngs: ArrayList<LatLng>
+    lateinit var handler: Handler
+    val latLngs: ArrayList<LatLng>
         get() {
-            val latLngs = ArrayList<LatLng>()
-            return latLngs
+            return ArrayList()
         }
 
     override fun showList(dataList: ByteArray, requestCode: Int) {
         this.datalist.clear()
         var s = String(dataList)
-        var lis = ReceiveBody.initialParse(s,"#")
-        for(l in lis){
-            var list1 = ReceiveBody.initialParse(l,"!")
-            datalist.add(MainDataInfo(list1[0],list1[1],list1[2]))
+        var lis = ReceiveBody.initialParse(s, "#")
+        for (l in lis) {
+            var list1 = ReceiveBody.initialParse(l, "!")
+            datalist.add(MainDataInfo(list1[0], list1[1], list1[2]))
             datahash.add(list1[3])
         }
         listAdapter = MainPageAdapter(datalist, this)
@@ -140,15 +149,6 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         recyclerView.adapter = listAdapter
     }
 
-//    private fun dataInit() {
-////        presenter = MainPresenter(this)
-//        var dp_50: Float = resources.getDimension(R.dimen.dp_50)
-//        recyclerView.translationY = dp_50
-////        presenter.getData()
-//        refreshV.searchView.start()
-////        presenter.getData("",13)
-//    }
-
 
     override fun onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -158,11 +158,12 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         if (flagStatus) {
             searchChange()
         } else {
-            if (time.toInt().equals(0)) {
+            if (time.toInt() == 0) {
                 time = System.currentTimeMillis()
                 Toast.makeText(this, "再次点击退出应用", Toast.LENGTH_SHORT).show()
             } else {
                 if (System.currentTimeMillis() - time < 2000) {
+                    Threads.exit()
                     super.onBackPressed()
                 } else {
                     time = System.currentTimeMillis()
@@ -189,15 +190,78 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
     override fun onResume() {
         airplaypath!!.flagstop = false
         super.onResume()
-//        refreshV.postDelayed({ dataInit() },5000)
         dataInit()
         addObserver()
+        addOStationbserver()
+        changeAtBegin()
+        if (SysApplication.alarmArea.size > 0) {
+            drawerLayout.postDelayed({ drawArea(SysApplication.alarmArea) }, 1000)
+        }
+        if (SysApplication.stationItem.size > 0) {
+            drawerLayout.postDelayed({ drawStation() }, 1000)
+        }
+    }
+
+    private fun addOStationbserver() {
+        Consumer.addObserverMapStation(object : DataListSource.getDataCallBack {
+            override fun dataGet(dataList: ByteArray) {
+                if (dataList.isEmpty()) {
+                    drawStation()
+                }
+            }
+
+            override fun error() {
+
+            }
+        })
+    }
+
+    private fun drawStation() {
+        for(item in stationMarkerList){
+            item.remove()
+        }
+        stationList.clear()
+        stationMarkerList.clear()
+        var lon = 0.0
+        var lat = 0.0
+        for(item in SysApplication.stationItem){
+            var list = ReceiveBody.initialParse(item,"|")
+            stationList.add(Station(list[0],list[1],list[2],list[3].toDouble(),list[4].toDouble()))
+            when(list[2]){
+                "正常" -> markerOptionStation = MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.station_unuse))
+                        .position(LatLng(list[4].toDouble(),list[3].toDouble()))
+                        .draggable(true)
+                "故障" -> markerOptionStation = MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.station_icon_trouble))
+                        .position(LatLng(list[4].toDouble(),list[3].toDouble()))
+                        .draggable(true)
+                "正在使用" -> markerOptionStation = MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.station_use))
+                        .position(LatLng(list[4].toDouble(),list[3].toDouble()))
+                        .draggable(true)
+            }
+            marker = aMap!!.addMarker(markerOptionStation)
+            stationMarkerList.add(marker)
+            lon = list[4].toDouble()
+            lat = list[3].toDouble()
+        }
+        Toast.makeText(this,"站点数据成功加载到地图",Toast.LENGTH_SHORT).show()
+        changeCamera(LatLng(lon,lat),true)
+    }
+
+    private fun changeAtBegin() {
+        var sharedPreferences = this.getSharedPreferences("latlng", Context.MODE_PRIVATE)
+        var lon = sharedPreferences.getFloat("lon", 0.0F)
+        var lat = sharedPreferences.getFloat("lat", 0.0F)
+        if (!lon.equals(0.0F)) {
+            refreshV.postDelayed({
+                changeCamera(LatLng(lon.toDouble(), lat.toDouble()), true)
+            }, 500)
+        }
     }
 
     private fun addObserver() {
         Consumer.addMainObserver(object : DataListSource.getDataCallBack {  //在线
             override fun dataGet(dataList: ByteArray) {
-                if (dataList.size == 0) {
+                if (dataList.isEmpty()) {
                     drawArea(SysApplication.alarmArea)
                 } else {
                     var dataList1 = RequestBuildUtil.unPack(dataList)
@@ -217,13 +281,13 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
     }
 
     private fun changeCamera(latLng: LatLng, room: Boolean) { //改变地图坐标位置
-        var zoom = aMap!!.getCameraPosition().zoom
+        var zoom = aMap!!.cameraPosition.zoom
         if (room) {
             aMap!!.moveCamera(CameraUpdateFactory.newCameraPosition(
                     CameraPosition.builder()
                             .target(latLng)
                             .tilt(18f)//目标区域倾斜度
-                            .zoom(17f)//缩放级别
+                            .zoom(18f)//缩放级别
                             .bearing(30f)//旋转角度
                             .build()))
         } else {
@@ -237,43 +301,48 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         }
     }
 
-    private fun addMarkersToMap(latLng: LatLng) {  //定点化标志
-        latLngs.add(latLng)
-        markerOption = MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.point))
+    private fun addMarkersToMap(latLng: LatLng) {  //定点画标志
+
+        if (latLngs.size > 0) {
+            marker.remove()
+            markerOption = MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.point))
+                    .position(latLngs[latLngs.size - 1])
+                    .draggable(false)
+            aMap!!.addMarker(markerOption)
+        }
+
+        markerOption = MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.drawable.airplane_small_map))
                 .position(latLng)
-                .draggable(true)
+                .draggable(false)
         marker = aMap!!.addMarker(markerOption)
+        latLngs.add(latLng)
     }
 
     fun drawArea(latLngs: List<LatLng>) {
-//        if (latLngs.size > 3) {
-//            polygon.remove()
-//        }
-//                addMarkersToMap(latLngs[1])
         if (polygon != null) {
             polygon!!.remove()
         }
         val polygonOptions1 = PolygonOptions()
-                .fillColor(Color.parseColor("#11000000")).strokeColor(Color.RED).strokeWidth(10f)
+                .fillColor(Color.parseColor("#11000000")).strokeColor(Color.RED).strokeWidth(4f)
         polygonOptions1.addAll(latLngs)
         polygon = aMap!!.addPolygon(polygonOptions1)
-        changeCamera(latLngs[latLngs.lastIndex], false)
+        changeCamera(latLngs[latLngs.lastIndex], true)
+        Toast.makeText(this,"报警区域信息成功加载到地图",Toast.LENGTH_SHORT).show()
     }
 
     private fun dataInit() {
         presenter = MainPresenter(this)
-        presenter.getData("", RequestBuildUtil.SEARCH_UAV)
+        map.postDelayed({presenter.getData("", RequestBuildUtil.SEARCH_UAV)},1000)
     }
-
-//    private fun initData() {
-//        presenter = MainPresenter(this)
-//        presenter!!.getData("", RequestBuildUtil.SEARCH_USER_LIST)
-//    }
 
     override fun onMapClick(p0: LatLng?) {
-        startActivity(Intent(this@MainActivity, MapActivity::class.java))
+
+        val intent = Intent(this, MapActivity::class.java)
+        intent.putExtra("id", -1)
+        startActivity(intent)
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initView(savedInstanceState: Bundle?) {
         map = findViewById(R.id.map)
         refreshV = findViewById(R.id.ref_layout)
@@ -292,22 +361,50 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
             aMap!!.setOnMapClickListener(this)
             mUiSettings = aMap!!.uiSettings
             mUiSettings.isScrollGesturesEnabled = false
+            mUiSettings.isZoomControlsEnabled = false
+            mUiSettings.isZoomGesturesEnabled = false
+            mUiSettings.isScrollGesturesEnabled = false
+            mUiSettings.isRotateGesturesEnabled = false
+            mUiSettings.isTiltGesturesEnabled = false
+            mUiSettings.setAllGesturesEnabled(false)
+            mUiSettings.isScaleControlsEnabled = true
         }
         editText.setOnClickListener {
             showSoftInputFromWindow(editText)
         }
-        editText!!.setOnEditorActionListener { v, actionId, event ->
+        editText!!.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-//                var imm:InputMethodManager = v.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                searchInList(editText.text.toString())
+                searchInList()
                 true
             }
             false
         }
+        editText.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                var thread = Thread(Runnable {
+                    searchList.clear()
+                    for (s1 in datalist) {
+                        if (s1.id.contains(s.toString(), true)) {
+                            searchList.add(s1)
+                        }
+                    }
+                    handler.sendEmptyMessage(1)
+                })
+                thread.start()
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+            }
+        })
         navigation.setNavigationItemSelectedListener { p0 ->
             when (p0.itemId) {
                 R.id.user_manager -> {
-                    if (SysApplication.user.type.equals(User.SUPER_USER)) {
+                    if (SysApplication.user.type == User.SUPER_USER) {
                         startActivity(Intent(this@MainActivity, UserManagerActivity::class.java))
                     } else {
                         Toast.makeText(this, "普通用户没有进行用户管理的权限", Toast.LENGTH_SHORT).show()
@@ -323,8 +420,8 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         var view = navigation.inflateHeaderView(R.layout.main_head)
         usernameTop = view.findViewById(R.id.user_name_show)
         userRight = view.findViewById(R.id.user_right)
-        usernameTop.setText(SysApplication.user.name)
-        userRight.setText("当前用户类型:" + if (SysApplication.user.type.equals(User.SUPER_USER)) "管理员" else "普通用户")
+        usernameTop.text = "用户名：" + SysApplication.user.name
+        userRight.text = "用户权限：" + if (SysApplication.user.type == User.SUPER_USER) "管理员" else "普通用户"
         airplaypath = view.findViewById(R.id.air_layout)
         var thread = Thread(airplaypath)
         view.postDelayed({ thread.start() }, 1000)
@@ -343,7 +440,6 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
             }
         }
         search.setOnClickListener {
-            dataInit()
             searchChange()
         }
         searchLay.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -353,11 +449,10 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         })
         refreshV.setListener(object : refreshV.HeadListener {
             override fun callback() {
-                Log.d("refreshtouchListener","come")
+                Log.d("refreshtouchListener", "come")
                 if (!refreshV.searchView.isRunning) {
                     var dp_50: Float = resources.getDimension(R.dimen.dp_50)
                     recyclerView.translationY = dp_50
-//                    presenter.getData(RequestBuildUtil.transformRequestToByte())
                     refreshV.searchView.start()
                     presenter = MainPresenter(this@MainActivity)
                     presenter.getData("", 13)
@@ -367,6 +462,15 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         })
         engAnimtions()
         refreshV.searchView.start()
+        handler = object : Handler() {
+            override fun handleMessage(msg: Message?) {
+                super.handleMessage(msg)
+                if (msg!!.what == 1) {
+                    listAdapter.datalist = searchList
+                    listAdapter.notifyDataSetChanged()
+                }
+            }
+        }
     }
 
     private fun ViewTreeObserver.OnGlobalLayoutListener.hideEdit() {
@@ -386,7 +490,7 @@ class MainActivity : BaseActivity(), MainTaskDetailContract.View, AMap.OnMapClic
         flagStatus = !flagStatus
     }
 
-    private fun searchInList(s: String) {
+    private fun searchInList() {
         Toast.makeText(this, "search", Toast.LENGTH_SHORT).show()
     }
 

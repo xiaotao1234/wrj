@@ -15,6 +15,7 @@ import com.example.uav_client.Application.SApplication;
 import com.example.uav_client.Application.SysApplication;
 import com.example.uav_client.Data.Common.ReceiveBody;
 import com.example.uav_client.Data.Common.RequestBuildUtil;
+import com.example.uav_client.Data.Common.Station;
 import com.example.uav_client.Data.Main.DataListSource;
 import com.example.uav_client.R;
 import com.example.uav_client.Utils.AppExecutors;
@@ -30,8 +31,10 @@ import androidx.annotation.Nullable;
 public class Consumer {
     private static List<Consumer> consumerPool = new ArrayList<>();
     private static DataListSource.getDataCallBack observerMap = null;
+    private static DataListSource.getDataCallBack observerMapStation = null;
     private static DataListSource.getDataCallBack observerMaponLine = null;
     private static DataListSource.getDataCallBack mainobserver = null;
+    private static DataListSource.getDataCallBack mainobserverStation = null;
 
     int requestCode;
 
@@ -63,12 +66,20 @@ public class Consumer {
         Consumer.observerMap = observerMap;
     }
 
+    public static void addObserverMapStation(DataListSource.getDataCallBack observerMap) {
+        Consumer.observerMapStation = observerMap;
+    }
+
     public static void addUnLineObserverMap(DataListSource.getDataCallBack observerMap) {
         Consumer.observerMaponLine = observerMap;
     }
 
     public static void addMainObserver(DataListSource.getDataCallBack observerMap) {
         Consumer.mainobserver = observerMap;
+    }
+
+    public static void addMainObserverStation(DataListSource.getDataCallBack observerMap) {
+        Consumer.mainobserverStation = observerMap;
     }
 
     public static Consumer getConsumer(int requestCode) {
@@ -84,17 +95,10 @@ public class Consumer {
     boolean end = false;
 
     public static void back(final byte[] bytes, String s) {
-        Log.d("datacome","back");
-//        if (RequestBuildUtil.fourBytesToInt(RequestBuildUtil.nigetPartByteArray(bytes, 0, 3)) != 0xEEEEEEEE) {
-//            if (temSave.length != 0) {
-//                BackToMain(RequestBuildUtil.mergeData(temSave, bytes), 14);
-//                return;
-//            }
-//        }
         int requestCode = RequestBuildUtil.unPackrequestCode(bytes, 8);
-        Log.d("datacomere", String.valueOf(requestCode));
+        Log.d("datacomereback", String.valueOf(requestCode));
         if (requestCode == 1) {
-            SysApplication.setAlarmArea(ReceiveBody.getAlarm(ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes),";")));
+            SysApplication.setAlarmArea(ReceiveBody.getAlarm(ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes), ";")));
             if (observerMap != null) {
                 appExecutors.mainThread().execute(new Runnable() {
                     @Override
@@ -104,6 +108,16 @@ public class Consumer {
                     }
                 });
             }
+            if (mainobserver != null) {
+                appExecutors.mainThread().execute(new Runnable(){
+                    @Override
+                    public void run() {
+                        byte[] b = new byte[0];
+                        mainobserver.dataGet(b);
+                    }
+                });
+            }
+
         } else if (requestCode == 2) {
             if (observerMap != null) {
                 appExecutors.mainThread().execute(new Runnable() {
@@ -112,7 +126,7 @@ public class Consumer {
                         observerMap.dataGet(bytes);
                     }
                 });
-            }else if(mainobserver != null){
+            } else if (mainobserver != null) {
                 appExecutors.mainThread().execute(new Runnable() {
                     @Override
                     public void run() {
@@ -121,7 +135,7 @@ public class Consumer {
                 });
             }
 
-            final List<String> lis = ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes),"|");
+            final List<String> lis = ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes), "|");
             if (Integer.parseInt(lis.get(lis.size() - 1)) == 1) {
                 appExecutors.mainThread().execute(new Runnable() {
                     @Override
@@ -144,7 +158,28 @@ public class Consumer {
             } else {
 
             }
-        } else {
+        }else if(requestCode == RequestBuildUtil.getSTATION_ITEM()){
+            List<String> strings = ReceiveBody.initialParse(RequestBuildUtil.unPackString(bytes), ";");
+            SysApplication.setStationItem(strings);
+            if (observerMapStation != null) {
+                appExecutors.mainThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        byte[] b = new byte[0];
+                        observerMapStation.dataGet(b);
+                    }
+                });
+            }
+            if (mainobserverStation != null) {
+                appExecutors.mainThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        byte[] b = new byte[0];
+                        mainobserverStation.dataGet(b);
+                    }
+                });
+            }
+        }else {
             BackToMain(bytes, requestCode);
         }
     }
@@ -165,7 +200,7 @@ public class Consumer {
     }
 
     static View popupView;
-    static PopupWindow newWindow;
+    static PopupWindow newWindow = new PopupWindow(popupView, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, true);
     static TextView textView;
 
     public static void popWindow(Activity activity, List<String> list) {
@@ -176,14 +211,22 @@ public class Consumer {
             newWindow.setWidth((int) activity.getResources().getDimension(R.dimen.dp_280));
             newWindow.setAnimationStyle(R.style.popup_window_anim);
             newWindow.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
-            newWindow.setFocusable(true);
+            newWindow.setFocusable(false);
             newWindow.setOutsideTouchable(true);
             newWindow.update();
-            newWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.CENTER_VERTICAL, 0, 0);
+            newWindow.showAtLocation(activity.getWindow().getDecorView(), Gravity.TOP, 0, 20);
             textView = popupView.findViewById(R.id.alarm_list);
         }
         if (textView != null) {
-            textView.setText(list.toString());
+            StringBuilder sall = new StringBuilder();
+            sall.append("无人机ID："+list.get(0));
+            sall.append("频率："+list.get(1));
+            sall.append("纬度："+list.get(2));
+            sall.append("经度："+list.get(3));
+            sall.append("俯仰角："+list.get(4));
+            sall.append("日期时间："+list.get(5));
+            sall.append("是否报警"+list.get(6));
+            textView.setText(sall);
         }
         MediaPlayer mediaPlayer = MediaPlayer.create(activity, R.raw.music);
         mediaPlayer.start(); // no need to call prepare(); create() does that for you
@@ -199,7 +242,7 @@ public class Consumer {
         return false;
     }
 
-    public static void stringToTime(List<String> stringList){
+    public static void stringToTime() {
         List<Date> dateList = new ArrayList<>();
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -257,8 +300,6 @@ public class Consumer {
             }
         });
     }
-
-
 
 
 }

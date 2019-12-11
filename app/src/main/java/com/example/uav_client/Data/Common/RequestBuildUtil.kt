@@ -20,6 +20,14 @@ class RequestBuildUtil {
         var SEARCH_UAV: Int = 13
         @JvmStatic
         var SEARCH_UAV_RESULT: Int = 14
+        @JvmStatic
+        var ALARM_AREA:Int = 15
+        @JvmStatic
+        var ALARM_RESULT = 16
+
+        @JvmStatic
+        var STATION_ITEM = 17
+
         var ERROR: ByteArray = addFrameHeader("", -1)
 
         fun transformRequestToByte(): ByteArray {
@@ -51,9 +59,6 @@ class RequestBuildUtil {
 
         @JvmStatic
         fun unPack(byteArray: ByteArray): ByteArray {
-//            if(nigetPartByteArray(byteArray,0,3) == sumHex(0xEEEEEEEE,4)){
-//            var byteArray1 = byteArray.copyOfRange(4, 8)
-//            var b = byteArray.copyOfRange(4, 8)
             var length = bytesToIntLittle(byteArray.copyOfRange(4, 8))
             return byteArray.copyOfRange(9, (9 + length - 5))
         }
@@ -124,11 +129,23 @@ class RequestBuildUtil {
         }
 
         @JvmStatic
+        public fun byte2hex(buffer: ByteArray): String {
+            var h = ""
+
+            for (i in buffer.indices) {
+                var temp = Integer.toHexString(buffer[i].toInt() and 0xFF)
+                if (temp.length == 1) {
+                    temp = "0$temp"
+                }
+                h = "$h $temp"
+            }
+
+            return h
+
+        }
+
+        @JvmStatic
         fun bytesToIntLittle(src: ByteArray): Int {
-//            for(byte in src){
-//                var s = byte.toInt() and 0xFF
-//                Log.d("xiao", s.toString())
-//            }
             val value: Int
             value = (src[0].toInt() and 0xFF
                     or (src[1].toInt() and 0xFF shl 8)

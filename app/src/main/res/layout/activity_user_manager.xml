@@ -36,6 +36,7 @@
 
             <ImageView
                 android:id="@+id/search"
+                android:visibility="gone"
                 android:layout_width="@dimen/dp_39"
                 android:layout_height="@dimen/dp_39"
                 android:layout_marginEnd="@dimen/dp_10"

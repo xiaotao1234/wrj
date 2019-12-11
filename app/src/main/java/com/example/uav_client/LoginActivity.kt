@@ -4,21 +4,24 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.view.Gravity
 import android.view.View
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.widget.*
 import com.example.uav_client.Application.SysApplication
 import com.example.uav_client.Data.Common.RequestBuildUtil
 import com.example.uav_client.Data.Common.User
 import com.example.uav_client.Prensenters.MainPresenter
 import com.example.uav_client.Contracts.MainTaskDetailContract
 import com.example.uav_client.Data.Common.ReceiveBody
+import com.example.uav_client.Data.DataSS.Datastatic
 
 class LoginActivity : AppCompatActivity(), MainTaskDetailContract.View {
     override fun error() {
@@ -32,9 +35,12 @@ class LoginActivity : AppCompatActivity(), MainTaskDetailContract.View {
     lateinit var loadingText: TextView
     lateinit var namepu: String
     lateinit var passwordpu: String
+    lateinit var loginLayout: LinearLayout
+    lateinit var bgLayout: LinearLayout
     lateinit var sharedPreferences: SharedPreferences
     lateinit var editor: SharedPreferences.Editor
     lateinit var presenter: MainTaskDetailContract.Presenter
+    lateinit var textView: TextView
     var id: Int = 0
     var string = "登陆中"
 
@@ -56,10 +62,10 @@ class LoginActivity : AppCompatActivity(), MainTaskDetailContract.View {
                 1 -> {
 //                    SysApplication.user = User(namepu, passwordpu, User.NORMAL_USER, 0, id)
                 }
-                3, 4, 5 -> string = string + "."
+                3, 4, 5 -> string += "."
                 6 -> string = string.substring(0, 3)
             }
-            loadingText.setText(string)
+            loadingText.text = string
         }
     }
 
@@ -88,10 +94,13 @@ class LoginActivity : AppCompatActivity(), MainTaskDetailContract.View {
     private fun initEvents() {
         presenter = MainPresenter(this)
         loginText.setOnClickListener {
-            loadingText.setText("登陆中")
-            val s: String = userNameEdit.text.trim().toString() + "|" + passwordEdit.text.trim()
-//            presenter.getData(RequestBuildUtil.addFrameHeader(s,RequestBuildUtil.USER_LOGIN))
-            presenter.getData(s, RequestBuildUtil.USER_LOGIN)
+            if(Datastatic.IP == ""){
+                Toast.makeText(this@LoginActivity,"Ip不能为空，请先在下方设置Ip",Toast.LENGTH_SHORT).show()
+            }else{
+                loadingText.text = "登陆中"
+                val s: String = userNameEdit.text.trim().toString() + "|" + passwordEdit.text.trim()
+                presenter.getData(s, RequestBuildUtil.USER_LOGIN)
+            }
         }
         cancelLoginText.setOnClickListener {
 
@@ -111,13 +120,52 @@ class LoginActivity : AppCompatActivity(), MainTaskDetailContract.View {
         sharedPreferences = this.getSharedPreferences("login", Context.MODE_PRIVATE)
         editor = sharedPreferences.edit()
         userNameEdit = findViewById(R.id.user_edit)
+        textView = findViewById(R.id.ip_text)
+        loginLayout = findViewById(R.id.login_lay)
+        bgLayout = findViewById(R.id.login_bg)
         passwordEdit = findViewById(R.id.password_edit)
         loginText = findViewById(R.id.main_btn_login)
         cancelLoginText = findViewById(R.id.main_btn_cancel)
         loadingText = findViewById(R.id.load_text)
         var name = sharedPreferences.getString("name", "")
         var password = sharedPreferences.getString("password", "")
+        var ip = sharedPreferences.getString("ip", "")
+        Datastatic.IP = ip
         userNameEdit.setText(name)
         passwordEdit.setText(password)
+        var s = Datastatic.IP
+        textView.text = "Ip：$s"
+        textView.setOnClickListener {
+            bgLayout.visibility = View.VISIBLE
+            popWindow(loginLayout)
+        }
+    }
+
+    private fun popWindow(parent: ViewGroup) {
+        val popupView = this@LoginActivity.layoutInflater.inflate(R.layout.popwindow_login, null)
+        popupView.setPadding(50, 0, 50, 0)
+        var newWindow = PopupWindow(popupView, LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, true)
+        newWindow.width = resources.getDimension(R.dimen.dp_280).toInt()
+        newWindow.animationStyle = R.style.popup_window_anim
+        newWindow.setBackgroundDrawable(ColorDrawable(Color.parseColor("#00000000")))
+        newWindow.isFocusable = true
+        newWindow.isOutsideTouchable = true
+        newWindow.update()
+        newWindow.showAtLocation(parent, Gravity.CENTER_VERTICAL, 0, -100)
+        var affirm = popupView.findViewById<TextView>(R.id.affirm_button)
+        var ipEditText = popupView.findViewById<EditText>(R.id.ip_edit)
+        ipEditText.setText(Datastatic.IP)
+        ipEditText.inputType = EditorInfo.TYPE_CLASS_PHONE
+        affirm.setOnClickListener {
+            Datastatic.IP = ipEditText.text.toString().trim()
+            newWindow.dismiss()
+            var s = Datastatic.IP
+            textView.text = "IP：   $s"
+            editor.putString("ip",Datastatic.IP)
+            editor.commit()
+        }
+        newWindow.setOnDismissListener {
+            bgLayout.visibility = View.GONE
+        }
     }
 }

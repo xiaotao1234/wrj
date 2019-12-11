@@ -7,12 +7,16 @@ import android.os.Looper
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
-class AppExecutors internal constructor(private val networkIO: Executor, private val mainThread: Executor) {
+class AppExecutors internal constructor(private val networkIO: Executor, private val mainThread: Executor,private val single:Executor) {
 
-    constructor() : this(Executors.newFixedThreadPool(THREAD_COUNT),MainThreadExecutor())
+    constructor() : this(Executors.newFixedThreadPool(THREAD_COUNT),MainThreadExecutor(),Executors.newSingleThreadExecutor())
 
     fun networkIO(): Executor {
         return networkIO
+    }
+
+    fun single(): Executor {
+        return single
     }
 
     fun mainThread(): Executor {

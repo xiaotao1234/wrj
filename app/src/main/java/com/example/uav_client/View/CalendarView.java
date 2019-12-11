@@ -127,7 +127,7 @@ public class CalendarView extends CustomView {
         titlePaint.setTextAlign(Paint.Align.CENTER);
         titlePaint.setAntiAlias(true);
         titlePaint.setTextSize(35);
-        titlePaint.setColor(Color.parseColor("#ED9922"));
+        titlePaint.setColor(Color.parseColor("#FFFFFF"));
 
         gridPaint = new Paint();
         gridPaint.setTextAlign(Paint.Align.CENTER);

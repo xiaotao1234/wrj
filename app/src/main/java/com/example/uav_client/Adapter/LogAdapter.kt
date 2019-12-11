@@ -28,7 +28,6 @@ class LogAdapter: RecyclerView.Adapter<LogAdapter.viewholder>() {
         holder.textView.setText(list[position][0])
         holder.username.setText(list[position][1])
         holder.operate.setText(list[position][2])
-//        holder.textView.setText(list[position].latitude.toString())
     }
 
     inner class viewholder(itemview: View) : RecyclerView.ViewHolder(itemview) {

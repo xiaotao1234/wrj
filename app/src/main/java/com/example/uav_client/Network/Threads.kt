@@ -22,7 +22,7 @@ class Threads {
         var messages: MutableList<ByteArray>? = null
         var length: Int = 0
         var isSend: Boolean = false
-        var runnable = Runnable {
+        private var runnable = Runnable {
             while (socket == null) {
                 releaseConnect()
                 if (messages == null) {
@@ -31,22 +31,22 @@ class Threads {
             }
             sendRequest()
             while (true) {
+                Log.d("xiao", ins.available().toString())
                 if (socket == null) {
                     releaseConnect()
                 }
-                Log.d("xiao", "0")
                 synchronized(ins) {
                     length = ins.available()
                     if (length > 0) {
-                        Log.d("datacome", length.toString())
+                        Log.d("datacome","come")
                         byteArray = ByteArray(length)
                         ins.read(byteArray)
                         messages?.add(byteArray)
-                        appExecutors?.networkIO()?.execute {
-                            Log.d("datacome","network")
-                            mergeDatapackge(byteArray)
-//                            Consumer.back(byteArray, String(byteArray))
+                        if (RequestBuildUtil.fourBytesToInt(RequestBuildUtil.nigetPartByteArray(byteArray, 0, 3)) == -0x11111112) {
+                            RequestBuildUtil.unPackrequestCode(byteArray, 8)
                         }
+                        mergeDatapackge(byteArray)
+//                            Consumer.back(byteArray, String(byteArray)=============================)
                     }
                 }
                 if (length == 0) {
@@ -63,7 +63,7 @@ class Threads {
                 } else {
 
                 }
-            }catch(e:Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
@@ -80,8 +80,17 @@ class Threads {
             }
         }
 
+        public fun exit(){
+            if(socket!!.isConnected){
+                socket!!.shutdownInput()
+                socket!!.shutdownInput()
+                socket!!.close()
+            }
+
+        }
+
         private fun releaseConnect() {
-            Log.d("xiao", "release")
+            Log.d("xiao","releaseConnect")
             loop@ for (i in 1..3) {
                 try {
                     if (socket == null) {
@@ -99,33 +108,62 @@ class Threads {
             }
         }
 
-        internal var temSave = ByteArray(0)
-        internal var havelength: Int = 0
-        internal var totallenght: Int = 0
+        private var temSave = ByteArray(0)
+        private var havelength: Int = 0
+        private var totallenght: Int = 0
         private fun mergeDatapackge(bytes: ByteArray) {
-            Log.d("bytelength", bytes.size.toString())
+            if (temSave.isNotEmpty()) {
+            }
             if (RequestBuildUtil.fourBytesToInt(RequestBuildUtil.nigetPartByteArray(bytes, 0, 3)) == -0x11111112) {
-                totallenght = RequestBuildUtil.getDataLength(bytes)+4
-                if (totallenght == bytes.size) {
-                    havelength = 0
-                    temSave = ByteArray(0)
-                    totallenght = 0
-                    Consumer.back(byteArray, String(byteArray))
-                } else {
-                    temSave = ByteArray(totallenght)
-                    System.arraycopy(bytes, 0, temSave, havelength, bytes.size)
-                    havelength += bytes.size
-                }
+                headSch(bytes)
             } else {
-                if (temSave.isNotEmpty()) {
+                tailSch(bytes)
+            }
+        }
+
+        private fun tailSch(bytes: ByteArray) {
+            if (temSave.isNotEmpty()) {
+                if (bytes.size <= totallenght - havelength) {
                     System.arraycopy(bytes, 0, temSave, havelength, bytes.size)
                     havelength += bytes.size
                     if (havelength == totallenght) {
                         havelength = 0
-                        temSave = ByteArray(0)
                         totallenght = 0
-                        Consumer.back(byteArray, String(byteArray))
+                        Consumer.back(temSave, String(temSave))
+                        temSave = ByteArray(0)
                     }
+                } else {
+                    System.arraycopy(bytes, 0, temSave, havelength, totallenght - havelength)
+                    var m = totallenght - havelength
+                    havelength = 0
+                    totallenght = 0
+                    Consumer.back(temSave, String(temSave))
+                    temSave = ByteArray(0)
+                    mergeDatapackge(bytes.copyOfRange(m, bytes.size))
+                }
+            } else {
+
+            }
+        }
+
+        private fun headSch(bytes: ByteArray) {
+            if(length>200){
+                Log.d("xiao","dadd")
+            }
+            totallenght = RequestBuildUtil.getDataLength(bytes) + 4
+            when {
+                totallenght == bytes.size -> {
+                    havelength = 0
+                    temSave = ByteArray(0)
+                    totallenght = 0
+                    Consumer.back(byteArray, String(byteArray))
+                }
+                totallenght < bytes.size -> {
+                }
+                else -> {
+                    temSave = ByteArray(totallenght)
+                    System.arraycopy(bytes, 0, temSave, havelength, bytes.size)
+                    havelength += bytes.size
                 }
             }
         }

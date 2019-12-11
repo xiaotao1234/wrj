@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -13,5 +13,9 @@
     </style>
     <style name="TextInputAppTheme" parent="Base.TextAppearance.AppCompat.Caption">
         <item name="android:textColor">@color/text_third_title_color</item>
+    </style>
+    <style name="EditTextStyle"
+        parent="@android:style/Widget.EditText">
+        <item name="android:importantForAutofill" tools:targetApi="o">noExcludeDescendants</item>
     </style>
 </resources>

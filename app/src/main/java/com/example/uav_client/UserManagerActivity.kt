@@ -210,7 +210,7 @@ class UserManagerActivity : BaseActivity(), MainTaskDetailContract.View {
         supertext1 = popupView.findViewById(R.id.super_change)
         deletetext = popupView.findViewById(R.id.delete_button)
         normaltext1 = popupView.findViewById(R.id.normal_change)
-        if (userListdata[position].type.equals(User.NORMAL_USER)) {
+        if (userListdata[position].type == User.NORMAL_USER) {
             normaltext1.setBackgroundResource(R.drawable.button_bg)
             supertext1.background = null
         } else {

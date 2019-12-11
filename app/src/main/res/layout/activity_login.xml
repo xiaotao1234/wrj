@@ -1,132 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="@dimen/dp_150"
-        android:src="@drawable/login_top_icon" />
-
-
-    <FrameLayout
-        android:id="@+id/contact_edit_frame"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:id="@+id/login_lay"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dp_101"
-        android:layout_gravity="center"
-        android:layout_margin="@dimen/dp_30"
-        android:layout_marginTop="@dimen/dp_80">
+        android:layout_height="match_parent"
+        android:background="@color/write"
+        android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/contact_edit_linearlayout"
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/dp_150"
+            android:src="@drawable/login_top_icon" />
+
+
+        <FrameLayout
+            android:id="@+id/contact_edit_frame"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/dp_101"
-            android:background="@drawable/edit_back"
-            android:orientation="vertical">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/ip_edit_layout"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/dp_50"
-                android:textColorHint="#BB000000"
-                app:hintTextAppearance="@style/TextInputAppTheme">
-
-                <EditText
-                    android:id="@+id/user_edit"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/dp_50"
-                    android:layout_marginTop="@dimen/dp_10"
-                    android:background="@null"
-                    android:hint="用户名"
-                    android:paddingLeft="@dimen/dp_20"
-                    android:textColor="#DD000000"
-                    android:textColorHint="#BB000000"
-                    android:textCursorDrawable="@null"
-                    android:textSize="@dimen/dp_11" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#44000000" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/dp_30"
+            android:layout_marginTop="@dimen/dp_80">
 
             <LinearLayout
+                android:id="@+id/contact_edit_linearlayout"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/dp_60"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                android:background="@drawable/edit_back"
+                android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/port1_edit_layout"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/dp_60"
+                    android:id="@+id/ip_edit_layout"
+                    android:layout_width="match_parent"
+                    android:layout_marginTop="@dimen/dp_5"
+                    android:layout_height="0dp"
                     android:layout_weight="1"
                     android:textColorHint="#BB000000"
                     app:hintTextAppearance="@style/TextInputAppTheme">
 
                     <EditText
-                        android:id="@+id/password_edit"
+                        android:id="@+id/user_edit"
+                        style="@style/EditTextStyle"
                         android:layout_width="match_parent"
-                        android:layout_height="@dimen/dp_50"
-                        android:layout_gravity="bottom"
-                        android:layout_marginTop="@dimen/dp_10"
+                        android:layout_height="@dimen/dp_40"
                         android:background="@null"
-                        android:hint="密码"
+                        android:hint="用户名"
                         android:paddingLeft="@dimen/dp_20"
-                        android:textColor="#DD000000"
-                        android:textColorHint="#60000000"
+                        android:textColor="#000000"
+                        android:textColorHint="#000000"
                         android:textCursorDrawable="@null"
                         android:textSize="@dimen/dp_11" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#11000000" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/port1_edit_layout"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dp_60"
+                        android:layout_marginTop="@dimen/dp_5"
+                        android:layout_weight="1"
+                        android:textColorHint="#BB000000"
+                        app:hintTextAppearance="@style/TextInputAppTheme">
+
+                        <EditText
+                            android:id="@+id/password_edit"
+                            style="@style/EditTextStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/dp_40"
+                            android:layout_gravity="bottom"
+                            android:background="@null"
+                            android:hint="密码"
+                            android:paddingLeft="@dimen/dp_20"
+                            android:textColor="#000000"
+                            android:textColorHint="#60000000"
+                            android:textCursorDrawable="@null"
+                            android:textSize="@dimen/dp_11" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
             </LinearLayout>
 
-        </LinearLayout>
-
-    </FrameLayout>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:textColor="#BB000000"
-        android:id="@+id/load_text"/>
-    <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/input_layout"
-        android:layout_marginTop="@dimen/dp_20"
-        android:layout_centerInParent="true"
-        android:layout_gravity="center"
-        android:gravity="center">
-
-        <Button
-            android:id="@+id/main_btn_login"
+        </FrameLayout>
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/text_bg"
-            android:paddingLeft="@dimen/dp_50"
-            android:paddingTop="@dimen/dp_8"
-            android:paddingRight="@dimen/dp_50"
-            android:paddingBottom="@dimen/dp_8"
-            android:text="登陆"
+            android:layout_gravity="center_horizontal"
+            android:textColor="#BB000000"
+            android:id="@+id/load_text"/>
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/input_layout"
+            android:layout_marginTop="@dimen/dp_20"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/main_btn_login"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/text_bg"
+                android:paddingLeft="@dimen/dp_50"
+                android:paddingTop="@dimen/dp_8"
+                android:paddingRight="@dimen/dp_50"
+                android:paddingBottom="@dimen/dp_8"
+                android:text="登陆"
+                android:textColor="@color/write"
+                android:textSize="@dimen/dp_11" />
+
+            <Button
+                android:id="@+id/main_btn_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/text_bg"
+                android:paddingLeft="@dimen/dp_50"
+                android:paddingTop="@dimen/dp_10"
+                android:visibility="gone"
+                android:paddingRight="@dimen/dp_50"
+                android:paddingBottom="@dimen/dp_10"
+                android:text="取消"
+                android:textColor="#ffffff"
+                android:textSize="@dimen/dp_11" />
+        </FrameLayout>
+        <View
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="@dimen/dp_50"
+            android:textSize="@dimen/dp_9"
             android:textColor="#000000"
-            android:textSize="@dimen/dp_11" />
-
-        <Button
-            android:id="@+id/main_btn_cancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/text_bg"
-            android:paddingLeft="@dimen/dp_50"
+            android:paddingLeft="@dimen/dp_20"
+            android:paddingRight="@dimen/dp_20"
             android:paddingTop="@dimen/dp_10"
-            android:visibility="gone"
-            android:paddingRight="@dimen/dp_50"
             android:paddingBottom="@dimen/dp_10"
-            android:text="取消"
-            android:textColor="#ffffff"
-            android:textSize="@dimen/dp_11" />
-    </FrameLayout>
-</LinearLayout>
+            android:textStyle="bold"
+            android:id="@+id/ip_text"/>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/login_bg"
+        android:visibility="gone"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#66000000"/>
+</FrameLayout>

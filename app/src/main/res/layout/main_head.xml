@@ -22,7 +22,7 @@
             android:id="@+id/user_name_show"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="当前用户：Tfafafafafa"
+            android:text="账户名称：Tfafafafafa"
             android:textColor="@color/write"
             android:textSize="@dimen/dp_9"
             android:layout_gravity="bottom"
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:textSize="@dimen/dp_9"
             android:layout_gravity="bottom"
-            android:text="用户权限：管理员"
+            android:text="账户权限：管理员"
             android:textColor="#FFFFFF"
             android:padding="@dimen/dp_20"/>
     </LinearLayout>

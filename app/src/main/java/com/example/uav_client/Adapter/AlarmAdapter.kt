@@ -26,11 +26,11 @@ class AlarmAdapter : RecyclerView.Adapter<AlarmAdapter.viewholder>() {
 
     override fun onBindViewHolder(holder: viewholder, position: Int) {
 
-        holder.time.setText(list[position][0])
-        holder.id.setText(list[position][1])
-        holder.pl.setText(list[position][2])
-        holder.lon.setText(list[position][4])
-        holder.lat.setText(list[position][5])
+        holder.time.text = list[position][0]
+        holder.id.text = list[position][1]
+        holder.pl.text = list[position][2]
+        holder.lon.text = "经度："+list[position][4]
+        holder.lat.text = "纬度："+list[position][5]
 //        holder.textView.setText(list[position].latitude.toString())
     }
 
